@@ -136,8 +136,16 @@
     <div id="signUpPage" class="section">
       <h2>Sign Up</h2>
       <p>Join as a guest to get started with Entra services.</p>
-      <button onclick="signIn()">Sign Up with Azure AD</button>
+      <button onclick="signUp()">Sign Up with Azure AD</button>
       <button onclick="showAuthPage()">Back to Sign In/Sign Up</button>
+    </div>
+
+    <!-- Pending Approval Section -->
+    <div id="pendingApprovalPage" class="section">
+      <h2>Request Pending Approval</h2>
+      <p>Your request to access the portal has been submitted and is pending approval.</p>
+      <p>Please wait for an administrator to approve your request. You will be notified via email once approved.</p>
+      <button onclick="signOut()">Sign Out</button>
     </div>
   </div>
 
@@ -173,10 +181,15 @@
       msalInstance.loginPopup(loginRequest).then(loginResponse => {
         console.log('id_token acquired at: ' + new Date().toString());
         console.log(loginResponse);
-        showHomePage(); // Redirect to the home page after successful login
+        checkUserApprovalStatus();
       }).catch(error => {
         console.error(error);
       });
+    }
+
+    // Sign-up function (similar to sign-in)
+    function signUp() {
+      signIn(); // This would generally trigger an approval workflow as a guest user
     }
 
     // Sign-out function
@@ -190,6 +203,29 @@
       }).catch(error => {
         console.error(error);
       });
+    }
+
+    // Check User Approval Status
+    function checkUserApprovalStatus() {
+      const account = msalInstance.getAllAccounts()[0];
+      if (account) {
+        // Simulate checking approval status
+        const isApproved = checkApprovalInBackend(account);
+        if (isApproved) {
+          showHomePage();
+        } else {
+          showPendingApprovalPage();
+        }
+      } else {
+        showAuthPage();
+      }
+    }
+
+    // Mock function to simulate checking approval status from backend
+    function checkApprovalInBackend(account) {
+      // You would replace this with an actual API call to check the user's approval status
+      // Example: return fetch(`/api/checkApprovalStatus?user=${account.username}`).then(response => response.json());
+      return false; // Assume not approved for demonstration
     }
 
     // Navigation Functions
@@ -216,6 +252,11 @@
       document.getElementById('signUpPage').classList.add('active');
     }
 
+    function showPendingApprovalPage() {
+      hideAllSections();
+      document.getElementById('pendingApprovalPage').classList.add('active');
+    }
+
     function hideAllSections() {
       document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active');
@@ -234,7 +275,7 @@
     function checkSignIn() {
       const accounts = msalInstance.getAllAccounts();
       if (accounts.length > 0) {
-        showHomePage(); // If already signed in, show home page
+        checkUserApprovalStatus(); // If signed in, check approval status
       } else {
         showAuthPage(); // If not signed in, show sign-in/sign-up page
       }
